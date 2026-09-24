@@ -11,6 +11,7 @@ import { resourceName } from './core/util.js';
 const atlas = document.getElementById('atlas');
 const slots = new Map(); // index -> { el, handle, key, token }
 let geom = { cols: 4, rows: 4, slotW: 512, slotH: 256 };
+let initialised = false;
 
 function slotEl(index) {
   let s = slots.get(index);
@@ -63,14 +64,19 @@ function handle(msg) {
   }
   if (!msg || typeof msg !== 'object') return;
   switch (msg.type) {
-    case 'init':
-      geom = { cols: msg.cols, rows: msg.rows, slotW: msg.slotW, slotH: msg.slotH };
+    case 'init': {
+      const next = { cols: msg.cols, rows: msg.rows, slotW: msg.slotW, slotH: msg.slotH };
+      const changed = JSON.stringify(next) !== JSON.stringify(geom) || !initialised;
+      geom = next;
       atlas.style.width = `${geom.cols * geom.slotW}px`;
       atlas.style.height = `${geom.rows * geom.slotH}px`;
       initFonts(msg.fonts, msg.fallback, 'fonts/');
       initAssets(msg.assets, '');
-      for (const k of [...slots.keys()]) clear(k);
+      // repeated init messages (sent defensively by the client) are harmless
+      if (changed) for (const k of [...slots.keys()]) { clear(k); slots.get(k).el.remove(); slots.delete(k); }
+      initialised = true;
       break;
+    }
     case 'slot':
       setSlot(msg);
       break;

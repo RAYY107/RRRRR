@@ -1,7 +1,7 @@
 // Evora ID — panel: the single image (emblem, URL or Discord avatar)
 
 import { h, ic, clear } from '../../dom.js';
-import { S, isAdvanced, setDesign } from '../../store.js';
+import { S, isAdvanced, setDesign, setUI } from '../../store.js';
 import { section, slider, segmented, toggle, colorField, fillEditor, select } from '../../controls.js';
 import { errText } from '../../i18n.js';
 import { request } from '../../nui.js';
@@ -9,6 +9,24 @@ import { request } from '../../nui.js';
 let urlDraft = '';
 let discordDraft = '';
 let status = null; // { kind: 'ok'|'err'|'busy', text }
+let keepRatio = true;
+
+// width / height bindings that keep the aspect ratio when locked
+function sizeBind(key) {
+  const other = key === 'w' ? 'h' : 'w';
+  return {
+    path: `image.${key}`,
+    get: () => S.design.image[key],
+    set: (v, commit = true) => setDesign((d) => {
+      const img = d.image;
+      if (keepRatio && img[key] > 0) {
+        const ratio = img[other] / img[key];
+        img[other] = Math.max(8, Math.min(256, Math.round(v * ratio)));
+      }
+      img[key] = v;
+    }, { commit }),
+  };
+}
 
 function limits() {
   return S.session?.limits?.images || S.session?.settings?.images || { enabled: true, allowUrl: true, allowDiscord: true, hosts: [] };
@@ -117,8 +135,9 @@ export default {
     if (!img.on) return out;
 
     out.push(section('الحجم والتموضع', [
-      slider(ctx, 'العرض', 'image.w'),
-      slider(ctx, 'الارتفاع', 'image.h'),
+      slider(ctx, 'العرض', sizeBind('w'), { min: 8, max: 256, dec: 0 }),
+      slider(ctx, 'الارتفاع', sizeBind('h'), { min: 8, max: 256, dec: 0 }),
+      toggle(ctx, 'الحفاظ على النسبة', { get: () => keepRatio, set: (v) => { keepRatio = v; } }),
       toggle(ctx, 'عرض تلقائي حسب الرقم', 'image.autoWidth'),
       img.autoWidth ? slider(ctx, 'الهامش', 'image.pad') : null,
       select(ctx, 'الالتصاق بالرقم', 'image.attach', [
@@ -128,6 +147,7 @@ export default {
       img.attach !== 'none' ? slider(ctx, 'المسافة', 'image.gap') : null,
       segmented(ctx, 'الترتيب', 'image.order', [{ value: 'back', label: 'خلف الرقم' }, { value: 'front', label: 'أمام الرقم' }]),
       img.kind !== 'asset' ? segmented(ctx, 'الملاءمة', 'image.fit', [{ value: 'cover', label: 'تعبئة' }, { value: 'contain', label: 'احتواء' }]) : null,
+      h('button.btn.sm', { style: { marginTop: '4px' }, onClick: () => setUI({ tab: 'position', selection: 'image' }) }, ic('move', 'sm'), 'الموضع والحجم والدوران'),
     ]));
 
     out.push(section('المظهر', [

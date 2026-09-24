@@ -158,7 +158,8 @@ end
 
 function Editor.open(mode)
     if Editor.isOpen or Editor.opening then return end
-    local why = blocked()
+    -- the live stage needs a free character; management lists do not
+    local why = mode ~= 'manage' and blocked() or nil
     if why then return EvoraClient.notify(why, 'error') end
     Editor.opening = true
 

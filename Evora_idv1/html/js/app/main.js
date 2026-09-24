@@ -9,7 +9,7 @@ import { initAssets } from '../core/render.js';
 import { complete, freshDesign } from './schema.js';
 import { createEditor } from './editor/editor.js';
 import { createManager } from './manager/manager.js';
-import { closePopover } from './ui.js';
+import { closePopover, closeTopModal } from './ui.js';
 import { hideTip } from './dom.js';
 import { clone } from '../core/util.js';
 
@@ -107,6 +107,13 @@ window.addEventListener('message', (e) => {
     case 'close': hideAll(); break;
     default: break;
   }
+});
+
+// Escape in the management view (the editor handles its own keys)
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || S.view !== 'manager') return;
+  if (closeTopModal()) return;
+  app.close();
 });
 
 appEl.classList.add('closed');

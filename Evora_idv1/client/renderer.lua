@@ -106,9 +106,15 @@ local function createAtlas()
             dui = nil
             return
         end
-        Wait(250)
+        -- The page's module script may attach its listener slightly after the
+        -- browser reports ready, and DUI pages cannot always call back. Re-send
+        -- the state a few times; the host ignores duplicates.
         duiReady = true
-        resendAll()
+        for _, delay in ipairs({ 250, 1000, 3000 }) do
+            Wait(delay)
+            if not dui then return end
+            resendAll()
+        end
     end)
 end
 

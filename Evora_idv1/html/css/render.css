@@ -47,6 +47,7 @@
 }
 
 .ev-line {
+  position: relative; /* offsets of characters are measured against the line */
   display: inline-flex;
   align-items: center;
   direction: ltr;

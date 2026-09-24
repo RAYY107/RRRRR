@@ -29,6 +29,7 @@ const page = await browser.newPage({ viewport: { width: cols * 512, height: rows
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+page.on('response', (r) => { if (r.status() >= 400) errors.push('HTTP ' + r.status() + ' ' + r.url()); });
 await page.goto(`http://127.0.0.1:${port}/render.html`);
 await page.addStyleTag({ content: `
   body { background: #2a2d33 !important; }
@@ -51,6 +52,7 @@ await page.evaluate((names) => {
   });
 }, presets.map((p) => `${p.id} · ${p.category}`));
 await page.screenshot({ path: path.join(here, 'out', 'presets.png') });
-console.log('errors:', errors.length ? errors : 'none');
+const real = errors.filter((e) => !/ERR_CONNECTION_REFUSED|404/.test(e)); // renderHostReady ping + favicon
+console.log('errors:', real.length ? real : 'none');
 await browser.close();
 server.close();
