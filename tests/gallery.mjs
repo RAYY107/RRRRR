@@ -37,11 +37,11 @@ await page.addStyleTag({ content: `
   .slot::after { content: attr(data-name); position: absolute; left: 8px; bottom: 6px; font: 12px sans-serif; color: #9aa0a6; }
 ` });
 await page.evaluate(({ data, cols, rows }) => {
-  window.__evoraHost.handle({ type: 'init', cols, rows, slotW: 512, slotH: 256, fonts: data.fonts, fallback: data.fallback, assets: data.assets });
+  window.__evoraHost.handle({ type: 'init', cols, rows, slotW: 512, slotH: 256, fonts: data.fonts, fallback: data.fallback, assets: data.assets, labels: data.labelFonts, defaultLabel: data.defaultLabel });
 }, { data, cols, rows });
 for (let i = 0; i < presets.length; i++) {
   await page.evaluate(({ i, p, id }) => {
-    window.__evoraHost.handle({ type: 'slot', slot: i + 1, id, key: p.id, design: p.design });
+    window.__evoraHost.handle({ type: 'slot', slot: i + 1, id, key: p.id, design: p.design, talking: i % 2 === 0 });
   }, { i, p: presets[i], id: ids[i % ids.length] });
 }
 await page.waitForTimeout(2500);

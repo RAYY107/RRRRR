@@ -14,7 +14,7 @@
 //   Each character: .ev-ch (static offset/rotate + filters) > .ev-ch-a (letter
 //   animation) > .ev-ch-s (outline) + .ev-ch-f (fill) [+ .ev-ch-x (sweep)]
 
-import { fontStack } from './fonts.js';
+import { fontStack, labelStack, voiceFontOf } from './fonts.js';
 import { rgba } from './color.js';
 import { buildEffect, effectNeedsOverlay } from './effects.js';
 
@@ -348,6 +348,99 @@ function buildImage(design, overlay, onError) {
 }
 
 // ---------------------------------------------------------------------------
+// Voice — "talking now" indicator
+// ---------------------------------------------------------------------------
+
+const SVGNS = 'xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"';
+export const VOICE_ICONS = {
+  wave: `<svg ${SVGNS}><circle cx="5.5" cy="12" r="2.4" fill="#fff"/><path d="M10 8.3a5.2 5.2 0 0 1 0 7.4M13.6 5.6a9 9 0 0 1 0 12.8M17.2 3a12.8 12.8 0 0 1 0 18" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/></svg>`,
+  mic: `<svg ${SVGNS}><rect x="8.8" y="2.5" width="6.4" height="12" rx="3.2" fill="#fff"/><path d="M5.4 11a6.6 6.6 0 0 0 13.2 0M12 17.6V21M8.6 21h6.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`,
+  dot: `<svg ${SVGNS}><circle cx="12" cy="12" r="5.5" fill="#fff"/></svg>`,
+  speaker: `<svg ${SVGNS}><path d="M3.5 9h4l5.5-4.5v15L7.5 15h-4z" fill="#fff"/><path d="M16.3 8.6a4.8 4.8 0 0 1 0 6.8M19 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`,
+  ring: `<svg ${SVGNS}><circle cx="12" cy="12" r="7.5" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.8" fill="#fff"/></svg>`,
+};
+
+const svgUrl = (svg) => `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+
+function outlineFilter(o) {
+  if (!o || !o.on || !(o.width > 0)) return '';
+  const c = rgba(o.color, o.alpha);
+  const w = Math.min(4, o.width);
+  return `drop-shadow(${w}px 0 0 ${c}) drop-shadow(-${w}px 0 0 ${c}) drop-shadow(0 ${w}px 0 ${c}) drop-shadow(0 -${w}px 0 ${c})`;
+}
+
+/** Builds the voice indicator layer (visible when an ancestor has .ev-talking). */
+export function buildVoice(design) {
+  const v = design.voice;
+  const layer = el('div', 'ev-layer ev-voicel');
+  const fx = el('div', `ev-vfx a-${v.anim}`);
+  const box = el('div', 'ev-vbox');
+  const content = el('div', 'ev-vcontent');
+  layer.appendChild(fx);
+  fx.appendChild(box);
+  box.appendChild(content);
+
+  const fill = v.matchText ? design.text.fill : v.fill;
+  const mainColor = fill.type === 'solid' ? fill.color : (fill.stops?.[0]?.c || '#FFFFFF');
+  layer.style.setProperty('--vs', String(v.speed || 1));
+  layer.style.setProperty('--vfade', `${v.fadeMs}ms`);
+  layer.style.setProperty('--vc', rgba(mainColor, 0.85));
+  layer.style.transform = layerTransform(v);
+
+  content.style.fontFamily = labelStack(voiceFontOf(design));
+  content.style.fontWeight = v.weight;
+  content.style.fontSize = `${v.size}px`;
+  const filters = [outlineFilter(v.outline), filterCss(v.shadow, v.glow)].filter(Boolean).join(' ');
+  if (filters) content.style.filter = filters;
+
+  if (v.bg.on) {
+    applyBoxFill(box, v.bg.fill);
+    box.style.borderRadius = `${v.bg.radius}px`;
+    box.style.padding = `${v.bg.padY}px ${v.bg.padX}px`;
+    if (v.bg.border.on && v.bg.border.width > 0) box.style.boxShadow = `inset 0 0 0 ${v.bg.border.width}px ${rgba(v.bg.border.color, v.bg.border.alpha)}`;
+  }
+
+  let icon = null;
+  if (v.icon === 'bars') {
+    icon = el('span', 'ev-vicon ev-vbars');
+    for (let i = 0; i < 4; i++) {
+      const bar = el('i');
+      applyBoxFill(bar, fill);
+      icon.appendChild(bar);
+    }
+  } else if (VOICE_ICONS[v.icon]) {
+    icon = el('span', 'ev-vicon');
+    icon.style.webkitMaskImage = svgUrl(VOICE_ICONS[v.icon]);
+    icon.style.maskImage = svgUrl(VOICE_ICONS[v.icon]);
+    applyBoxFill(icon, fill);
+  }
+  if (icon) {
+    icon.style.width = `${v.size * 1.05}px`;
+    icon.style.height = `${v.size * 1.05}px`;
+  }
+  let label = null;
+  if (v.showLabel && v.label) {
+    label = el('span', 'ev-vlabel');
+    label.textContent = v.label;
+    if (v.tracking) label.style.letterSpacing = `${v.tracking}px`;
+    applyTextFill(label, fill);
+  }
+  const parts = v.iconSide === 'end' ? [label, icon] : [icon, label];
+  parts.filter(Boolean).forEach((p) => content.appendChild(p));
+  if (!label && !icon) layer.style.display = 'none';
+  return { layer, box };
+}
+
+/** Standalone indicator (on-screen HUD). Always visible. */
+export function renderVoiceBadge(container, design) {
+  const { layer } = buildVoice(design);
+  layer.classList.add('ev-badge');
+  layer.style.transform = `scale(${design.voice.scale})`;
+  container.appendChild(layer);
+  return { el: layer, destroy: () => layer.remove() };
+}
+
+// ---------------------------------------------------------------------------
 // Public
 // ---------------------------------------------------------------------------
 
@@ -388,12 +481,14 @@ export function renderDesign(container, design, id, opts = {}) {
     if (image) all.appendChild(image.layer);
     all.appendChild(text.layer);
   }
+  const voice = design.voice && design.voice.on && !opts.noVoice ? buildVoice(design) : null;
+  if (voice) all.appendChild(voice.layer);
 
   container.appendChild(stage);
 
   let styleEl = null;
   const handle = {
-    stage, root, group, all, text, image, inst,
+    stage, root, group, all, text, image, voice, inst,
     relayout() {
       // whole-text gradients: every character samples its slice of one
       // gradient spanning the full line
@@ -444,9 +539,39 @@ export function renderDesign(container, design, id, opts = {}) {
         handle.imagePos = { x, y };
         image.layer.style.transform = layerTransform({ ...I, x, y });
       }
+      // voice indicator attached to a side of the ID
+      handle.voicePos = null;
+      if (voice) {
+        const V = design.voice;
+        const tw = lw * T.scale;
+        const th = lh * T.scale;
+        const vw = voice.layer.offsetWidth * V.scale;
+        const vh = voice.layer.offsetHeight * V.scale;
+        const align = design.text.align;
+        const cx = T.x + (align === 'left' ? tw / 2 : align === 'right' ? -tw / 2 : 0);
+        // reference box: the ID, extended by an image attached on the same side
+        let top = T.y - th / 2, bottom = T.y + th / 2, left = cx - tw / 2, right = cx + tw / 2;
+        if (image && handle.imagePos && design.image.attach === V.attach) {
+          const iw = image.box.offsetWidth * I.scale / 2, ih = image.box.offsetHeight * I.scale / 2;
+          top = Math.min(top, handle.imagePos.y - ih);
+          bottom = Math.max(bottom, handle.imagePos.y + ih);
+          left = Math.min(left, handle.imagePos.x - iw);
+          right = Math.max(right, handle.imagePos.x + iw);
+        }
+        let x = cx, y = T.y;
+        if (V.attach === 'top') y = top - V.gap - vh / 2;
+        else if (V.attach === 'bottom') y = bottom + V.gap + vh / 2;
+        else if (V.attach === 'left') x = left - V.gap - vw / 2;
+        else x = right + V.gap + vw / 2;
+        x += V.x;
+        y += V.y;
+        handle.voicePos = { x, y };
+        voice.layer.style.transform = layerTransform({ ...V, x, y });
+      }
+
+      let css = '';
       if (useFx) {
-        if (styleEl) styleEl.remove();
-        const css = buildEffect(design, {
+        css += buildEffect(design, {
           scope: `.${inst}`,
           lineW: lw,
           lineH: lh,
@@ -454,11 +579,23 @@ export function renderDesign(container, design, id, opts = {}) {
           nodes: text.nodes,
           imageW: image ? image.box.offsetWidth : 0,
         });
-        if (css) {
-          styleEl = document.createElement('style');
-          styleEl.textContent = css;
-          document.head.appendChild(styleEl);
-        }
+      }
+      // the ID itself while its player talks
+      const V = design.voice;
+      if (V && V.on && ((V.idGlow && V.idGlow.on) || V.idScale > 1)) {
+        const g = V.idGlow;
+        const glow = g && g.on && g.strength > 0
+          ? `filter:drop-shadow(0 0 ${Math.max(1, g.radius * 0.35)}px ${rgba(g.color, Math.min(1, g.strength * 1.1))}) drop-shadow(0 0 ${g.radius}px ${rgba(g.color, g.strength)});`
+          : '';
+        const scale = V.idScale > 1 ? `transform:scale(${V.idScale});` : '';
+        css += `.${inst} .ev-text .ev-line{transition:filter ${V.fadeMs}ms, transform ${V.fadeMs}ms;}`;
+        css += `.ev-talking .${inst} .ev-text .ev-line, .ev-talking.${inst} .ev-text .ev-line{${glow}${scale}}`;
+      }
+      if (styleEl) { styleEl.remove(); styleEl = null; }
+      if (css) {
+        styleEl = document.createElement('style');
+        styleEl.textContent = css;
+        document.head.appendChild(styleEl);
       }
     },
     destroy() {

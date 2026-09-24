@@ -15,8 +15,9 @@ import shadow from './panels/shadow.js';
 import outline from './panels/outline.js';
 import chars from './panels/chars.js';
 import layers from './panels/layers.js';
+import voice from './panels/voice.js';
 
-export const PANELS = [text, font, colors, gradient, effect, image, position, shadow, outline, chars, layers];
+export const PANELS = [text, font, colors, gradient, effect, image, voice, position, shadow, outline, chars, layers];
 
 export function createInspector({ head, foot }) {
   const tabs = h('div.tabs');
@@ -65,7 +66,11 @@ export function createInspector({ head, foot }) {
     if (kind === 'history') refresh({});
     if (kind === 'ui') {
       if ('level' in info) { renderTabs(); build(); return; }
-      if ('tab' in info) { renderTabs(); panel.scrollTop = 0; build(); return; }
+      if ('tab' in info) {
+        // opening the voice tab shows the talking state on the live preview
+        if (info.tab === 'voice' && !S.ui.previewTalk) setTimeout(() => setUI({ previewTalk: true }), 0);
+        renderTabs(); panel.scrollTop = 0; build(); return;
+      }
       refresh({});
     }
   });

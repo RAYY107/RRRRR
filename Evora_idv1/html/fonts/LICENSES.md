@@ -1,6 +1,6 @@
 # Font Licences
 
-All fonts in `html/fonts/` are distributed under the **SIL Open Font License, Version 1.1** (full text below). They were obtained from the Google Fonts catalogue and subset to the glyphs required by Evora ID. Reserved Font Names, where declared by the authors, are retained; the subset files are distributed under their original names only as part of this resource and are not sold separately.
+All fonts in `html/fonts/` are distributed under the **SIL Open Font License, Version 1.1** (full text below). The files in `id/` were obtained from the Google Fonts catalogue and subset to the glyphs required by Evora ID. Reserved Font Names, where declared by the authors, are retained; the subset files are distributed under their original names only as part of this resource and are not sold separately. The files in `label/` (full Arabic + Latin sets used for the talking indicator) come from the same families listed below.
 
 
 | Font | Copyright |
@@ -42,7 +42,8 @@ All fonts in `html/fonts/` are distributed under the **SIL Open Font License, Ve
 | Orbitron | Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron), with Reserved Font Name: "Orbitron". |
 | Rajdhani | Copyright (c) 2014 Indian Type Foundry (info@indiantypefoundry.com) |
 | Exo 2 | Copyright 2013 The Exo 2 Project Authors (https://github.com/googlefonts/Exo-2.0) |
-| Audiowide | Copyright (c) 2012 by Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with ReservedFont Name "Audiowide" |
+| Audiowide | Copyright (c) 2012 by Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved
+Font Name "Audiowide" |
 | Russo One | Copyright (c) 2011-2012, Jovanny Lemonad (jovanny.ru), with Reserved Font Name "Russo" |
 | Teko | Copyright 2023 The Teko Project Authors (https://www.github.com/googlefonts/teko) |
 | Saira Condensed | Copyright 2016 The Saira Project Authors (omnibus.type@gmail.com), with reserved font name "Saira". |
@@ -52,7 +53,8 @@ All fonts in `html/fonts/` are distributed under the **SIL Open Font License, Ve
 | JetBrains Mono | Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono) |
 | Michroma | Copyright 2011 The Michroma Project Authors (https://github.com/googlefonts/Michroma-font) |
 | Unbounded | Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded) |
-| Righteous | Copyright (c) 2011 by Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with ReservedFont Name "Righteous" |
+| Righteous | Copyright (c) 2011 by Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved
+Font Name "Righteous" |
 | Bungee | Copyright 2023 The Bungee Project Authors (https://github.com/djrrb/Bungee) |
 | Black Ops One | Copyright 2022 The PinyonScript Project Authors (https://github.com/SorkinType/Black-Ops) |
 | Monoton | Copyright (c) 2011 by vernon adams. All rights reserved. |

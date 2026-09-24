@@ -4,7 +4,8 @@
 
 import { S, emit } from './store.js';
 import { post } from './nui.js';
-import { initFonts } from '../core/fonts.js';
+import { initFonts, initLabelFonts } from '../core/fonts.js';
+import { hudInit, hudStyle, hudShow } from './hud.js';
 import { initAssets } from '../core/render.js';
 import { complete, freshDesign } from './schema.js';
 import { createEditor } from './editor/editor.js';
@@ -69,6 +70,7 @@ function hideAll() {
 function boot(data) {
   S.boot = data;
   initFonts(data.fonts, data.fontFallback, 'fonts/');
+  initLabelFonts(data.labelFonts, data.defaultLabel, 'fonts/');
   initAssets(data.assets, '');
   if (!editor) {
     editor = createEditor(app);
@@ -105,6 +107,9 @@ window.addEventListener('message', (e) => {
     case 'open': open(m.mode, m.data || {}); break;
     case 'anchor': S.anchor = m.data; emit('anchor'); break;
     case 'close': hideAll(); break;
+    case 'hudInit': hudInit(m.data || {}); break;
+    case 'hudStyle': hudStyle(m.data && m.data.design); break;
+    case 'hud': hudShow(m.on); break;
     default: break;
   }
 });

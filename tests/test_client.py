@@ -60,6 +60,10 @@ function SetTextFont() end function SetTextScale() end function SetTextColour() 
 function BeginTextCommandDisplayText() end function AddTextComponentSubstringPlayerName() end
 function EndTextCommandDisplayText() texts = texts + 1 end
 function GetPlayerName() return 'x' end
+talkingNow = {}
+function NetworkIsPlayerTalking(p) return talkingNow[p] == true end
+nuiMessages = {}
+function SendNUIMessage(m) nuiMessages[#nuiMessages + 1] = m end
 """
 
 TESTS = r"""
@@ -110,6 +114,32 @@ Editor.isOpen, Editor.stage = true, true
 nui_preview({ design = { text = { size = 9999, font = '<script>' } }, displayId = 'abc' }, function() end)
 check(Renderer.preview.design.text.size == 180 and Renderer.preview.design.text.font == 'cairo', 'preview design sanitized')
 check(Renderer.preview.displayId == 7, 'invalid preview id falls back to the real id')
+-- voice: DUI "talk" toggles only when the state changes
+Renderer.setPreview(nil, nil)
+for _ = 1, 4 do tick() end -- let the DUI start-up re-sends finish
+Renderer.rescan()
+local function talkMsgs() local n = 0 for _, m in ipairs(duiMessages) do if m.type == 'talk' then n = n + 1 end end return n end
+local t0 = talkMsgs()
+talkingNow[1] = true
+tick()
+check(talkMsgs() == t0 + 1, 'talk message when player 12 starts talking')
+tick(); tick()
+check(talkMsgs() == t0 + 1, 'no repeated talk messages while still talking')
+talkingNow[1] = false
+tick()
+check(talkMsgs() == t0 + 2, 'talk message when player stops')
+
+-- HUD for the local player
+Editor.isOpen = false -- the HUD hides while the editor is open
+Renderer.hudInit()
+talkingNow[0] = true
+tick()
+local sawStyle, sawOn = false, false
+for _, m in ipairs(nuiMessages) do
+    if m.action == 'hudStyle' and m.data.design then sawStyle = true end
+    if m.action == 'hud' and m.on then sawOn = true end
+end
+check(sawStyle and sawOn, 'HUD receives the style and shows while talking')
 print('client tests passed')
 """
 

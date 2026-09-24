@@ -4,7 +4,7 @@
 // arrive when a slot's content changes; nothing here runs per frame
 // except the CSS animations of the designs themselves.
 
-import { initFonts, ensureFonts, fontsOfDesign } from './core/fonts.js';
+import { initFonts, initLabelFonts, ensureFonts, fontsOfDesign } from './core/fonts.js';
 import { renderDesign, initAssets } from './core/render.js';
 import { resourceName } from './core/util.js';
 
@@ -33,6 +33,7 @@ function clear(index) {
   if (!s) return;
   s.token++;
   s.key = null;
+  s.el.classList.remove('ev-talking');
   if (s.handle) s.handle.destroy();
   s.handle = null;
 }
@@ -50,6 +51,7 @@ async function setSlot(msg) {
   await ensureFonts(fontsOfDesign(msg.design));
   if (token !== s.token) return;
   const old = s.handle;
+  s.el.classList.toggle('ev-talking', !!msg.talking);
   try {
     s.handle = renderDesign(s.el, msg.design, msg.id);
   } catch {
@@ -72,6 +74,7 @@ function handle(msg) {
       atlas.style.height = `${geom.rows * geom.slotH}px`;
       initFonts(msg.fonts, msg.fallback, 'fonts/');
       initAssets(msg.assets, '');
+      initLabelFonts(msg.labels, msg.defaultLabel, 'fonts/');
       // repeated init messages (sent defensively by the client) are harmless
       if (changed) for (const k of [...slots.keys()]) { clear(k); slots.get(k).el.remove(); slots.delete(k); }
       initialised = true;
@@ -83,6 +86,12 @@ function handle(msg) {
     case 'clear':
       clear(msg.slot);
       break;
+    case 'talk': {
+      // a player started / stopped talking: only a class toggle, no re-render
+      const s = slots.get(msg.slot);
+      if (s) s.el.classList.toggle('ev-talking', !!msg.on);
+      break;
+    }
     default:
       break;
   }

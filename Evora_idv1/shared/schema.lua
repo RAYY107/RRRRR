@@ -262,6 +262,47 @@ local Design = obj({
         rotate = num(-45, 45, 0, 1),
         fade = bool(true),
     }),
+    -- "Talking now" indicator, shown only while the player talks.
+    voice = obj({
+        on = bool(true),
+        label = str(24, 'يتحدث الآن', 'label'),
+        showLabel = bool(true),
+        icon = enum({ 'none', 'wave', 'mic', 'bars', 'dot', 'speaker', 'ring' }, 'wave'),
+        iconSide = enum({ 'start', 'end' }, 'start'),   -- start = right of the text (RTL)
+        attach = enum({ 'top', 'bottom', 'left', 'right' }, 'top'),
+        gap = num(-40, 80, 4, 0),
+        x = num(-200, 200, 0, 1),
+        y = num(-120, 120, 0, 1),
+        scale = num(0.3, 3, 1, 3),
+        rotate = num(-45, 45, 0, 1),
+        matchText = bool(true),                          -- reuse the ID's fill (+ font when it has Arabic)
+        font = ref('labelFont', 'plex-ar'),
+        weight = int(100, 900, 600),
+        size = num(10, 64, 20, 1),
+        tracking = num(-5, 30, 0, 1),
+        fill = Fill('#F4F5F6'),
+        outline = Outline(1, '#0B0C0E'),
+        glow = Glow(),
+        shadow = Shadow(),
+        bg = obj({
+            on = bool(true),
+            fill = Fill('#0E0F12'),
+            radius = int(0, 60, 60),
+            padX = num(0, 40, 10, 0),
+            padY = num(0, 24, 4, 0),
+            border = Outline(1, '#FFFFFF'),
+        }),
+        anim = enum({ 'none', 'pulse', 'glow', 'bounce', 'blink', 'breathe' }, 'pulse'),
+        speed = num(0.25, 4, 1, 2),
+        fadeMs = int(0, 1200, 180),
+        idGlow = obj({
+            on = bool(false),
+            color = color('#FFFFFF'),
+            radius = num(0, 60, 16, 1),
+            strength = num(0, 1, 0.6),
+        }),
+        idScale = num(1, 1.4, 1, 3),                      -- ID grows slightly while talking
+    }),
     meta = obj({
         preset = str(48, '', 'id'),
         name = str(C.Limits.NameLength, ''),
@@ -299,7 +340,31 @@ local function checkUrl(s)
     return true
 end
 
+-- Labels: letters (Arabic / Latin), spaces and light punctuation. Digits are
+-- NOT allowed, so a label can never show a number next to the real ID.
+local function labelCodepointOk(cp)
+    if cp == 0x20 then return true end
+    if (cp >= 0x41 and cp <= 0x5A) or (cp >= 0x61 and cp <= 0x7A) then return true end
+    if cp >= 0x0621 and cp <= 0x065F then return true end        -- Arabic letters + marks
+    if cp >= 0x066E and cp <= 0x06D3 then return true end        -- extended letters (Persian ...)
+    for _, p in ipairs({ 0x2E, 0x2C, 0x21, 0x3F, 0x2D, 0x3A, 0xB7, 0x2022, 0x2026, 0x060C, 0x061F, 0x0640, 0x27, 0x2F }) do
+        if cp == p then return true end
+    end
+    return false
+end
+
+local function checkLabel(s)
+    if s == '' then return true end
+    local n = 0
+    for _, cp in utf8.codes(s) do
+        if not labelCodepointOk(cp) then return false end
+        n = n + 1
+    end
+    return n <= 24
+end
+
 local strChecks = {
+    label = checkLabel,
     affix = checkAffix,
     url = checkUrl,
     snowflake = function(s) return s == '' or (s:match('^%d+$') ~= nil and #s >= 17 and #s <= 20) end,
@@ -308,6 +373,7 @@ local strChecks = {
 
 local refChecks = {
     font = function(v) return EvoraFonts.ById[v] ~= nil end,
+    labelFont = function(v) return EvoraFonts.LabelsById and EvoraFonts.LabelsById[v] ~= nil end,
     asset = function(v) return EvoraAssets.ById[v] ~= nil end,
     effect = function(v) return EvoraEffects.ById[v] ~= nil end,
 }
@@ -444,6 +510,22 @@ local function normalize(d)
     end
     d.text.weight = nearestWeight(d.text.font, d.text.weight)
 
+    -- voice label rules from Config.Voice (server and client share them)
+    local v = d.voice
+    sortStops(v.fill)
+    sortStops(v.bg.fill)
+    local VC = Config and Config.Voice
+    if VC then
+        local default = VC.DefaultLabel or 'يتحدث الآن'
+        if not checkLabel(default) then default = '' end
+        if v.label == '' and v.showLabel then v.label = default end
+        if VC.AllowCustomLabel == false and not U.indexOf(VC.Labels or {}, v.label) then v.label = default end
+        local lower = v.label:lower()
+        for _, word in ipairs(VC.BlockedWords or {}) do
+            if word ~= '' and lower:find(tostring(word):lower(), 1, true) then v.label = default break end
+        end
+    end
+
     d.version = C.DesignVersion
     return d
 end
@@ -533,3 +615,4 @@ end
 
 EvoraSchema.checkUrl = checkUrl
 EvoraSchema.checkAffix = checkAffix
+EvoraSchema.checkLabel = checkLabel

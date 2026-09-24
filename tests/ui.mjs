@@ -25,6 +25,7 @@ const boot = {
   schema: data.schema, defaults: data.defaults, fonts: data.fonts, fontFallback: data.fallback, assets: data.assets,
   effects: data.effects, effectPresets: data.effectPresets, easings: data.easings, categories: data.categories,
   affixes: data.affixes, numerals: data.numerals, limits: data.limits, editor: { snap: 8, minZoom: 1.1, maxZoom: 3.6 },
+  labelFonts: data.labelFonts, defaultLabel: data.defaultLabel, voice: data.voice,
 };
 const selfBootstrap = {
   serverId: 7, name: 'Layla', perms: { self: true, manage: true, bypass: false },
@@ -103,11 +104,12 @@ await page.evaluate(async () => {
   const { renderDesign } = await import('./js/core/render.js');
   const { ensureFonts, fontsOfDesign } = await import('./js/core/fonts.js');
   let handle = null;
-  window.__preview = async ({ design, displayId }) => {
+  window.__preview = async ({ design, displayId, talking }) => {
     const d = design || window.__default;
     if (!d) return;
     await ensureFonts(fontsOfDesign(d));
     const host = document.getElementById('dui');
+    host.classList.toggle('ev-talking', !!talking);
     if (handle) handle.destroy();
     handle = renderDesign(host, d, displayId);
     const a = window.__anchor;
@@ -191,6 +193,21 @@ if (box) {
 await page.locator('.tab', { hasText: 'الصورة' }).click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: path.join(here, 'out', 'ui-editor-image.png') });
+
+// voice tab: talking preview on the live character
+await page.locator('.tab', { hasText: 'الصوت' }).click();
+await page.waitForTimeout(900);
+await page.screenshot({ path: path.join(here, 'out', 'ui-editor-voice.png') });
+await page.locator('.panel .fx-tile', { hasText: 'مستوى' }).click();
+await page.locator('.panel .chip', { hasText: 'On Mic' }).click();
+await page.waitForTimeout(700);
+await page.screenshot({ path: path.join(here, 'out', 'ui-editor-voice2.png') });
+// on-screen HUD
+await page.evaluate(({ boot, d }) => {
+  window.postMessage({ action: 'hudInit', data: { labels: boot.labelFonts, defaultLabel: boot.defaultLabel, position: 'bottom-center', offsetX: 0, offsetY: 120, scale: 1 } }, '*');
+  window.postMessage({ action: 'hudStyle', data: { design: d } }, '*');
+  window.postMessage({ action: 'hud', on: true }, '*');
+}, { boot, d: byId['aurora'].design });
 
 // manager
 await page.evaluate(({ managerBootstrap }) => window.postMessage({ action: 'open', mode: 'manage', data: managerBootstrap }, '*'), { managerBootstrap });

@@ -19,6 +19,9 @@ def export(path):
         affixes = EvoraConst.AffixSymbols,
         numerals = EvoraConst.Numerals,
         limits = EvoraConst.Limits,
+        labelFonts = EvoraFonts.Labels,
+        defaultLabel = EvoraFonts.DefaultLabel,
+        voice = { enabled = true, labels = Config.Voice.Labels, allowCustom = Config.Voice.AllowCustomLabel, defaultLabel = Config.Voice.DefaultLabel },
     })""")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as fh:

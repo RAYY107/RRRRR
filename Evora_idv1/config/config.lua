@@ -186,6 +186,48 @@ Config.Render = {
 }
 
 ---------------------------------------------------------------------------
+-- Voice — "talking now" indicator (push-to-talk / N)
+---------------------------------------------------------------------------
+-- Every player's design has a "voice" section (editor tab: الصوت) that
+-- styles the indicator shown while they talk: text, icon, font, colours,
+-- background, outline, glow, position, animation and an optional glow /
+-- scale on the ID itself. It is drawn above the head together with the
+-- ID, and on the talking player's own screen (HUD).
+Config.Voice = {
+    Enabled = true,
+    Overhead = true,              -- show above heads of talking players
+
+    -- Indicator on your own screen while you talk
+    Hud = {
+        Enabled = true,
+        -- top-left | top-center | top-right | center-left | center-right
+        -- bottom-left | bottom-center | bottom-right
+        Position = 'bottom-center',
+        OffsetX = 0,              -- pixels
+        OffsetY = 120,            -- pixels (away from the chosen edge)
+        Scale = 1.0,
+    },
+
+    -- How often (ms) talking state is polled for visible players. The DUI is
+    -- only messaged when someone starts or stops talking.
+    CheckInterval = 100,
+
+    -- Talking detection. NetworkIsPlayerTalking works with FiveM voice,
+    -- pma-voice and mumble-voip. Replace for another voice system.
+    IsTalking = function(player)
+        return NetworkIsPlayerTalking(player)
+    end,
+
+    DefaultLabel = 'يتحدث الآن',
+    -- Ready-made labels offered in the editor
+    Labels = { 'يتحدث الآن', 'يتكلم', 'على المايك', 'متصل صوتياً', 'Talking', 'On Mic', 'Speaking' },
+    -- false = players can only pick one of Labels
+    AllowCustomLabel = true,
+    -- labels containing any of these (case-insensitive) fall back to DefaultLabel
+    BlockedWords = {},
+}
+
+---------------------------------------------------------------------------
 -- Editor
 ---------------------------------------------------------------------------
 Config.Editor = {

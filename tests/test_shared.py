@@ -38,6 +38,21 @@ def run():
         assert(not EvoraSchema.checkUrl('https://x.com/a.png)'))
         assert(not EvoraSchema.checkUrl('http://x.com/a.png'))
         assert(EvoraSchema.checkAffix('[#]') and not EvoraSchema.checkAffix('7') and not EvoraSchema.checkAffix('####'))
+
+        -- voice label: letters only, never digits (cannot fake another ID)
+        assert(EvoraSchema.checkLabel('يتحدث الآن') and EvoraSchema.checkLabel('On Mic!'))
+        assert(not EvoraSchema.checkLabel('ID 99') and not EvoraSchema.checkLabel('رقم ٩٩') and not EvoraSchema.checkLabel('<b>'))
+        local v = EvoraSchema.sanitize({ version = 1, voice = { label = 'ID 42', size = 999, icon = 'evil', font = 'nope' } }).voice
+        assert(v.label == 'يتحدث الآن' and v.size == 64 and v.icon == 'wave' and v.font == 'plex-ar', 'voice sanitized')
+        Config.Voice.AllowCustomLabel = false
+        assert(EvoraSchema.sanitize({ version = 1, voice = { label = 'Hello' } }).voice.label == Config.Voice.DefaultLabel)
+        assert(EvoraSchema.sanitize({ version = 1, voice = { label = 'Talking' } }).voice.label == 'Talking')
+        Config.Voice.AllowCustomLabel = true
+        Config.Voice.BlockedWords = { 'bad' }
+        assert(EvoraSchema.sanitize({ version = 1, voice = { label = 'so BAD' } }).voice.label == Config.Voice.DefaultLabel)
+        Config.Voice.BlockedWords = {}
+        -- designs saved before the voice section existed get it by default
+        assert(EvoraSchema.sanitize({ version = 1 }).voice.on == true)
     """)
     cats = L.eval("(function() local t = {} for _, p in ipairs(EvoraPresets.List) do t[p.category] = (t[p.category] or 0) + 1 end local s = {} for k, v in pairs(t) do s[#s+1] = k .. '=' .. v end table.sort(s) return table.concat(s, ' ') end)()")
     size = L.eval("#json.encode(EvoraSchema.describe())")

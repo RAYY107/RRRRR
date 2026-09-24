@@ -48,6 +48,14 @@ local function staticData()
         numerals = EvoraConst.Numerals,
         limits = EvoraConst.Limits,
         editor = { snap = CFG.SnapThreshold or 8, minZoom = CFG.MinZoom, maxZoom = CFG.MaxZoom },
+        labelFonts = EvoraFonts.Labels,
+        defaultLabel = EvoraFonts.DefaultLabel,
+        voice = {
+            enabled = Config.Voice and Config.Voice.Enabled ~= false,
+            labels = Config.Voice and Config.Voice.Labels or {},
+            allowCustom = not Config.Voice or Config.Voice.AllowCustomLabel ~= false,
+            defaultLabel = Config.Voice and Config.Voice.DefaultLabel or '',
+        },
     }
 end
 
@@ -241,7 +249,10 @@ RegisterNUICallback('preview', function(data, cb)
     if not displayId or displayId < 0 or displayId > 65535 then
         displayId = GetPlayerServerId(PlayerId())
     end
+    local talking = Renderer.preview and Renderer.preview.talking
     Renderer.setPreview(design, displayId)
+    if type(data) == 'table' and data.talking ~= nil then talking = data.talking == true or nil end
+    Renderer.setPreviewTalking(talking)
     Renderer.rescan()
 end)
 
@@ -313,4 +324,13 @@ end)
 RegisterNUICallback('nuiReady', function(_, cb)
     cb(true)
     booted = false
+    Renderer.hudInit()
+end)
+
+-- "Talking" preview in the voice tab (nil = follow the real mic state)
+RegisterNUICallback('previewTalking', function(data, cb)
+    cb(true)
+    if not Editor.isOpen then return end
+    local v = type(data) == 'table' and data.on
+    Renderer.setPreviewTalking(v == true and true or nil)
 end)

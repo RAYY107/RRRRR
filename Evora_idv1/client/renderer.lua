@@ -73,6 +73,7 @@ local function initMessage()
         type = 'init',
         cols = COLS, rows = ROWS, slotW = STAGE_W, slotH = STAGE_H,
         fonts = fonts, fallback = EvoraFonts.Fallback, assets = assets,
+        labels = EvoraFonts.Labels, defaultLabel = EvoraFonts.DefaultLabel,
     }
 end
 
@@ -201,6 +202,11 @@ function Renderer.setPreview(design, displayId)
     end
 end
 
+-- Force the talking look on the editor preview (nil = real state).
+function Renderer.setPreviewTalking(v)
+    if Renderer.preview then Renderer.preview.talking = v end
+end
+
 function Renderer.pinAnchor(coords)
     Renderer.pinned = coords
 end
@@ -248,6 +254,25 @@ function Renderer.toggleKeyVisible()
     showKeyActive = not showKeyActive
 end
 
+---------------------------------------------------------------------------
+-- Voice: who is talking
+---------------------------------------------------------------------------
+
+local VOICE = Config.Voice or {}
+
+local function isTalking(player)
+    if not VOICE.Enabled or type(VOICE.IsTalking) ~= 'function' then return false end
+    local ok, res = pcall(VOICE.IsTalking, player)
+    return ok and res == true or (ok and res == 1)
+end
+
+local function talkingOf(e)
+    if not (e.design and e.design.voice and e.design.voice.on) then return false end
+    if e.isLocal and Renderer.preview and Renderer.preview.talking ~= nil then return Renderer.preview.talking end
+    if not VOICE.Overhead then return false end
+    return isTalking(e.player)
+end
+
 local function assignSlots(list)
     local wanted = {}
     for i = 1, math.min(#list, dui and duiReady and CAPACITY or 0) do
@@ -278,7 +303,8 @@ local function assignSlots(list)
             local s = slots[i]
             if s.key ~= entry.key then
                 s.key = entry.key
-                duiSend({ type = 'slot', slot = i, id = entry.displayId, key = entry.key, design = entry.design })
+                s.talking = talkingOf(entry)
+                duiSend({ type = 'slot', slot = i, id = entry.displayId, key = entry.key, design = entry.design, talking = s.talking })
             end
             entry.slot = i
         end
@@ -329,6 +355,7 @@ local function scan()
                             end
                         end
                         list[#list + 1] = {
+                            player = player,
                             serverId = serverId,
                             displayId = displayId,
                             ped = ped,
@@ -419,6 +446,26 @@ function Renderer.start()
         end
     end)
 
+    -- talking state: a class toggle in the DUI, only when it changes
+    CreateThread(function()
+        while true do
+            if VOICE.Enabled then
+                for _, e in ipairs(Renderer.visible) do
+                    local s = e.slot and slots[e.slot]
+                    if s and s.serverId == e.serverId then
+                        local t = talkingOf(e)
+                        if s.talking ~= t then
+                            s.talking = t
+                            duiSend({ type = 'talk', slot = e.slot, on = t })
+                        end
+                    end
+                end
+                Renderer.updateHud()
+            end
+            Wait(VOICE.CheckInterval or 100)
+        end
+    end)
+
     CreateThread(function()
         while true do
             if #Renderer.visible > 0 then
@@ -429,6 +476,48 @@ function Renderer.start()
             end
         end
     end)
+end
+
+---------------------------------------------------------------------------
+-- On-screen HUD: your own "talking now" indicator (html/index.html #hud)
+---------------------------------------------------------------------------
+
+local hud = { key = nil, on = false, ready = false }
+
+function Renderer.hudInit()
+    local cfg = VOICE.Hud or {}
+    hud.ready = true
+    hud.key = nil
+    hud.on = false
+    SendNUIMessage({
+        action = 'hudInit',
+        data = {
+            labels = EvoraFonts.Labels,
+            defaultLabel = EvoraFonts.DefaultLabel,
+            position = cfg.Position or 'bottom-center',
+            offsetX = cfg.OffsetX or 0,
+            offsetY = cfg.OffsetY or 120,
+            scale = cfg.Scale or 1.0,
+        },
+    })
+end
+
+function Renderer.updateHud()
+    local cfg = VOICE.Hud or {}
+    if not hud.ready or not cfg.Enabled then return end
+    local myId = GetPlayerServerId(PlayerId())
+    local design, hash = Renderer.designFor(myId)
+    if not design then design, hash = Renderer.default, 'default' end
+    local key = design and design.voice and design.voice.on and hash or nil
+    if key ~= hud.key then
+        hud.key = key
+        SendNUIMessage({ action = 'hudStyle', data = { design = key and design or nil } })
+    end
+    local on = key ~= nil and not (Editor and Editor.isOpen) and isTalking(PlayerId())
+    if on ~= hud.on then
+        hud.on = on
+        SendNUIMessage({ action = 'hud', on = on })
+    end
 end
 
 -- Force an immediate rescan (e.g. right after the preview changed).

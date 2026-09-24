@@ -37,6 +37,7 @@ export const S = {
     charSel: { mode: 'all', a: 0, b: 0, list: [] },
     kf: 0,
     random: null,
+    previewTalk: false,
   },
 };
 

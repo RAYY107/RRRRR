@@ -5,13 +5,14 @@ import { S, isAdvanced, setDesign, setUI } from '../../store.js';
 import { section, slider, toggle } from '../../controls.js';
 import { T } from '../../i18n.js';
 
-export const SEL_PATH = { stage: 'transform', group: 'group', text: 'layers.text', image: 'layers.image' };
+export const SEL_PATH = { stage: 'transform', group: 'group', text: 'layers.text', image: 'layers.image', voice: 'voice' };
 
 export function selectionOptions() {
   const o = [{ value: 'stage', label: T.sel.stage }];
   if (S.design.group.on) o.push({ value: 'group', label: T.sel.group });
   o.push({ value: 'text', label: T.sel.text });
   if (S.design.image.on) o.push({ value: 'image', label: T.sel.image });
+  if (S.design.voice && S.design.voice.on) o.push({ value: 'voice', label: T.sel.voice });
   return o;
 }
 
@@ -25,14 +26,14 @@ function reset(path, keys) {
 export default {
   id: 'position',
   icon: 'move',
-  key: () => `${S.ui.level}|${S.ui.selection}|${S.design.group.on}|${S.design.image.on}|${S.design.image.attach}`,
+  key: () => `${S.ui.level}|${S.ui.selection}|${S.design.group.on}|${S.design.image.on}|${S.design.image.attach}|${S.design.voice && S.design.voice.on}`,
   build(ctx) {
     const adv = isAdvanced();
     const sel = SEL_PATH[S.ui.selection] ? S.ui.selection : 'stage';
     const path = SEL_PATH[sel];
     const opts = selectionOptions();
     const selector = h('div.seg', opts.map((o) => h('button', { type: 'button', class: o.value === sel ? 'on' : '', onClick: () => setUI({ selection: o.value }) }, o.label)));
-    const attached = sel === 'image' && S.design.image.attach !== 'none';
+    const attached = (sel === 'image' && S.design.image.attach !== 'none') || sel === 'voice';
     return [
       section('العنصر المحدد', [selector], { hint: 'يمكنك أيضاً سحب العناصر مباشرة فوق شخصيتك في المعاينة.' }),
       section(attached ? 'إزاحة عن الرقم' : 'الموضع', [

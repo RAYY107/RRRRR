@@ -523,6 +523,7 @@ textarea.input { height: 70px; padding: 8px 10px; resize: none; line-height: 1.6
 .gz-stage .ev-layer > .gz-frame.hover { display: none; }
 .gz-stage .ev-layer:hover > .gz-frame.hover { display: block; }
 .gz-stage .ev-layer { pointer-events: auto; cursor: move; }
+.gz-stage:not(.talk) .ev-voicel { pointer-events: none; }
 .gz-stage-frame { position: absolute; inset: 0; border: calc(1px * var(--inv, 1)) dashed rgba(255,255,255,.18); pointer-events: none; }
 .gz-stage.sel-stage .gz-stage-frame { border-style: solid; border-color: rgba(255,255,255,.7); }
 .gz-frame {
@@ -630,3 +631,8 @@ textarea.input { height: 70px; padding: 8px 10px; resize: none; line-height: 1.6
 .toast { padding: 10px 16px; border-radius: 7px; border: 1px solid var(--line-2); background: rgba(14,15,18,.97); box-shadow: var(--shadow); font-size: 12px; display: flex; gap: 9px; align-items: center; animation: popIn .18s var(--ease); }
 .toast.err { border-color: rgba(255,255,255,.28); }
 .tip { position: fixed; z-index: 80; padding: 5px 9px; border-radius: 4px; background: #f1f2f4; color: #0b0c0e; font-size: 11px; pointer-events: none; white-space: nowrap; }
+
+/* ================================================================ HUD (talking) */
+#hud { position: fixed; z-index: 1; pointer-events: none; opacity: 0; transition: opacity .18s ease; direction: rtl; }
+#hud.on { opacity: 1; }
+#hud:not(.on) * { animation-play-state: paused !important; }

@@ -10,3 +10,8 @@ for _, f in ipairs(EvoraFonts.List) do
     end
     EvoraFonts.ById[f.id] = f
 end
+
+EvoraFonts.LabelsById = {}
+for _, f in ipairs(EvoraFonts.Labels or {}) do
+    EvoraFonts.LabelsById[f.id] = f
+end

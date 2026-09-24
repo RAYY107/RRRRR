@@ -34,7 +34,7 @@ export function createEditor(app) {
   const sendPreview = throttle(() => {
     if (S.view !== 'editor') return;
     const before = S.ui.compare === 'before';
-    post('preview', { design: before ? S.baseline : S.design, displayId: S.displayId });
+    post('preview', { design: before ? S.baseline : S.design, displayId: S.displayId, talking: !!S.ui.previewTalk });
   }, 45);
   const autosave = debounce(() => {
     if (S.view !== 'editor' || !S.design) return;
@@ -441,6 +441,7 @@ export function createEditor(app) {
     if (kind === 'history') { autosave(); refreshChrome(); if (S.ui.random) { S.ui.random = null; renderBanner(); } }
     if (kind === 'ui') {
       if ('compare' in info) { sendPreview(); renderToolbar(); }
+      if ('previewTalk' in info) post('previewTalking', { on: !!S.ui.previewTalk });
       if ('snap' in info || 'guides' in info) renderToolbar();
       if ('nav' in info) layoutChanged();
     }
@@ -489,6 +490,7 @@ export function createEditor(app) {
       S.ui.compare = 'after';
       S.ui.selection = 'stage';
       S.ui.timeline = false;
+      S.ui.previewTalk = false;
       resetImageStatus();
       loadDesign(startDesign, { resetHistory: true });
       const d = store.getDraft(scope());

@@ -80,6 +80,7 @@ export function createGizmo() {
     if (sel === 'stage') return g.k;
     if (d.group.on) s *= d.group.scale;
     if (sel === 'group') return s;
+    if (sel === 'voice') return s * d.voice.scale;
     return s * d.layers[sel].scale;
   }
 
@@ -87,9 +88,13 @@ export function createGizmo() {
     if (!ghost || !geometry()) return;
     const sel = S.ui.selection;
     stageEl.classList.toggle('sel-stage', sel === 'stage');
+    const talk = !!(S.ui.previewTalk && S.design.voice && S.design.voice.on);
+    stageEl.classList.toggle('talk', talk);
+    stageEl.classList.toggle('ev-voice-force', talk);
     const label = drag ? drag.label : null;
-    for (const key of ['text', 'image']) {
-      const layer = key === 'text' ? ghost.text?.layer : ghost.image?.layer;
+    for (const key of ['text', 'image', 'voice']) {
+      if (key === 'voice' && !talk) continue;
+      const layer = layerEl(key);
       if (!layer) continue;
       layer.dataset.layer = key;
       layer.style.setProperty('--inv', String(1 / Math.max(0.001, scaleOf(key))));
@@ -130,6 +135,7 @@ export function createGizmo() {
     if (!ghost) return null;
     if (sel === 'text') return ghost.text?.layer;
     if (sel === 'image') return ghost.image?.layer;
+    if (sel === 'voice') return ghost.voice?.layer;
     return null;
   }
 
@@ -185,8 +191,8 @@ export function createGizmo() {
     const me = rectOf(sel);
     if (!me) return { dx: 0, dy: 0, lines: [] };
     const xs = [{ at: g.cx }], ys = [{ at: g.cy }];
-    const other = sel === 'text' ? 'image' : sel === 'image' ? 'text' : null;
-    const or = other && S.design[other === 'image' ? 'image' : 'text'] && (other === 'text' || S.design.image.on) ? rectOf(other) : null;
+    const other = sel === 'text' ? 'image' : (sel === 'image' || sel === 'voice') ? 'text' : null;
+    const or = other && (other !== 'image' || S.design.image.on) ? rectOf(other) : null;
     if (or) {
       xs.push({ at: or.left }, { at: or.left + or.width / 2 }, { at: or.right });
       ys.push({ at: or.top }, { at: or.top + or.height / 2 }, { at: or.bottom });
@@ -287,7 +293,7 @@ export function createGizmo() {
     if (!layer) return;
     const key = layer.dataset.layer;
     let sel = key;
-    if (S.design.group.on && S.ui.selection !== key) sel = 'group';
+    if (S.design.group.on && key !== 'voice' && S.ui.selection !== key) sel = 'group';
     if (sel !== S.ui.selection) setUI({ selection: sel });
     startDrag(e, sel, 'move');
   });
@@ -322,7 +328,7 @@ export function createGizmo() {
 
   on((kind, info) => {
     if (kind === 'design' || kind === 'anchor' || kind === 'view') { place(); render(); }
-    if (kind === 'ui' && ('selection' in info || 'compare' in info)) { place(); render(); }
+    if (kind === 'ui' && ('selection' in info || 'compare' in info || 'previewTalk' in info)) { place(); render(); }
   });
   window.addEventListener('resize', () => { place(); render(); });
 

@@ -12,13 +12,13 @@ export const T = {
   },
   tabs: {
     text: 'النص', font: 'الخط', colors: 'الألوان', gradient: 'التدرج', effect: 'التأثير', image: 'الصورة',
-    position: 'الموضع', shadow: 'الظلال', outline: 'الإطار', chars: 'الأحرف', layers: 'الطبقات',
+    position: 'الموضع', shadow: 'الظلال', outline: 'الإطار', chars: 'الأحرف', layers: 'الطبقات', voice: 'الصوت',
   },
   status: {
     permanent: 'دائم', temporary: 'مؤقت', expired: 'منتهي', draft: 'مسودة', none: 'بدون تصميم', cooldown: 'فترة انتظار', locked: 'مقفل',
     featured: 'مميز', hidden: 'مخفي',
   },
-  sel: { stage: 'التكوين', group: 'المجموعة', text: 'النص', image: 'الصورة' },
+  sel: { stage: 'التكوين', group: 'المجموعة', text: 'النص', image: 'الصورة', voice: 'مؤشر التحدث' },
   numerals: { latin: 'إنجليزية', arabic: 'عربية', persian: 'فارسية' },
   fontCats: {
     all: 'الكل', arabic: 'عربي', 'arabic-display': 'عربي عرض', 'arabic-serif': 'عربي كلاسيكي', sans: 'حديث', condensed: 'ضيق',

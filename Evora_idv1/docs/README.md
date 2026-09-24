@@ -50,6 +50,7 @@ Brand: **Evora** · Author: **Made by LR** · Framework: Universal vRP (plus a s
 - **One image.** Pick a bundled emblem (tintable with any fill), a direct HTTPS image URL, or a Discord user's avatar resolved securely on the server. Controls cover size (with ratio lock), fit, radius, opacity, border, glow, shadow, front/back order, auto-width backgrounds and attaching to a side of the number so the image never overlaps it, however many digits the ID has. Animated GIFs play.
 - **One effect.** 24 effect types plus a custom keyframe effect, and 25 reusable effect presets. Simple mode offers speed and intensity. Advanced mode adds a **timeline** with delay, duration, repeats, ping-pong, easing, direction, letter stagger and keyframes.
 - **58 complete presets** in 12 categories. Each one is a full visual identity (font, fill, outline, shadow, glow, character rules, image, effect and layout), not a colour swap.
+- **"Talking now" indicator (push-to-talk / N).** While a player talks, an indicator appears with their ID, visible to everyone, and also on the talking player's own screen. Every detail is part of the design (editor tab **الصوت**): the text (choose from ready labels or write your own), the icon (wave, mic, animated level bars, speaker, ring, dot or none) and its side, position (above, below, left or right of the ID), gap, offset, size and rotation. You also style the font (14 full Arabic + Latin fonts) or match the ID's font and colour, the fill/gradient, the background pill (fill, radius, padding, border), outline, glow and shadow, and the animation (pulse, glow, bounce, blink, breathe) with its speed and fade. The ID itself can glow or grow while its player talks.
 - **Randomize** builds a coherent design from a mood, a matching palette, a font and an effect. You can generate again, apply, or discard it.
 - **Before / After** comparison on the live character.
 - **Undo / Redo** covers text, characters, image, transforms, gradients, effects, presets, randomize and layers.
@@ -69,6 +70,8 @@ These were captured by the automated browser harness (`tests/ui.mjs`), so the ce
 | Editor: drag, snap and guides on the live ID | Editor: presets gallery |
 |---|---|
 | ![Editor](images/editor.jpg) | ![Presets](images/editor-presets.jpg) |
+| **Voice tab: talking indicator on the live ID** | |
+| ![Voice](images/editor-voice.jpg) | |
 | **Management: players and details** | **Management: preset admin** |
 | ![Management](images/manager.jpg) | ![Preset admin](images/manager-presets.jpg) |
 
@@ -225,6 +228,7 @@ Everything configurable lives in `config/config.lua` (shared) and `config/fonts.
 | `Config.Slots` / `Config.Favorites` | Saved design slots per player, favourites limit. |
 | `Config.DefaultPreset` | Look for players without a design (a preset id, or `false` for native text). |
 | `Config.Render` | Display mode (`always` / `hold` / `toggle` + key), max distance, fade start, height offset, own ID, line of sight, hide in vehicles, world size of the stage, scale, distance scaling and clamps, atlas size, scan interval. |
+| `Config.Voice` | Enable, above-head indicator, on-screen HUD (position, offset, scale), poll interval, talking detection function, default and ready-made labels, custom labels allowed, blocked words. |
 | `Config.Editor` | Camera distance / height / FOV / zoom limits, vehicle block, default snap sensitivity. |
 | `Config.Images` | Enable, URL / Discord toggles, host allow-list, extensions, GIF, max bytes, URL length, validation cache, Discord token convar, avatar size, refresh interval. |
 | `Config.Webhook` | Enable, URL convar, username, colour, which actions are sent. |
@@ -292,6 +296,18 @@ Everything is **local preview** until **Save**. Nothing on the server changes un
 - There is **no database polling**. Expiry is checked when a player loads, and every `Config.Temporary.CheckInterval` seconds against the in-memory records of online players only. When a design expires it stops showing immediately and `Evora_idv1:designExpired` fires.
 - Expired designs stay visible under the **Expired** filter so managers can extend them or make them permanent. `Config.Database.PurgeExpiredAfterDays` clears them after the given number of days (one statement at start-up).
 - `Config.Temporary.SelfEditKeepsExpiry`: when a player edits a temporary design, it keeps its expiry (`true`) or becomes permanent (`false`).
+
+---
+
+## Talking indicator (voice)
+
+When a player holds their push-to-talk key (N by default), an indicator such as **يتحدث الآن** appears with their ID for everyone nearby, and on their own screen. Its look is part of each player's design, so every preset already has a matching indicator (it takes the preset's colours and, when possible, its font). Players change everything in the editor's **الصوت** tab. The tab switches the live preview into "talking" mode so the result is visible on the character, and the indicator can be dragged there directly.
+
+- **Detection:** `Config.Voice.IsTalking(player)` defaults to `NetworkIsPlayerTalking`, which works with FiveM voice, pma-voice and mumble-voip. Replace it for another voice system.
+- **Cost:** talking state is checked every `CheckInterval` ms for visible players only. The renderer is only told when someone starts or stops talking (a CSS class toggle, no re-render). Indicators never animate while hidden.
+- **On-screen HUD:** `Config.Voice.Hud` sets the position (`bottom-center`, `top-right`, …), offset and scale. It is hidden while the editor is open.
+- **Labels:** letters, spaces and light punctuation only. **Digits are not allowed**, so a label can never show a number next to the real ID. Set `AllowCustomLabel = false` to limit players to `Config.Voice.Labels`. `BlockedWords` makes matching labels fall back to `DefaultLabel`. The server enforces all of this.
+- **Your existing voice HUD:** if your voice resource or HUD already shows its own "talking" text, turn that off to avoid duplicates. Evora cannot hide another resource's UI.
 
 ---
 
@@ -546,7 +562,7 @@ oxmysql is called through its exports with placeholders (`?`) for every value. N
 
 | Table | Purpose |
 |---|---|
-| `evora_id_designs` | One row per account: design JSON, hash, preset id, mode, expiry, lock, last self save, display name, timestamps. `design = NULL` means "no design" (the row keeps the cooldown and lock state). |
+| `evora_id_designs` | One row per account: design JSON (including the voice indicator style), hash, preset id, mode, expiry, lock, last self save, display name, timestamps. `design = NULL` means "no design" (the row keeps the cooldown and lock state). |
 | `evora_id_slots` | Saved design slots (`owner`, `slot`, `name`, `design`). |
 | `evora_id_favorites` | Favourite presets and slots. |
 | `evora_id_presets` | Manager-created presets, plus flag/order overrides for built-in presets. |
