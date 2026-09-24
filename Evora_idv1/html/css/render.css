@@ -1,0 +1,167 @@
+/* Evora ID — design rendering (shared by the DUI atlas and the editor) */
+
+.ev-stage {
+  position: relative;
+  width: 512px;
+  height: 256px;
+  overflow: hidden;
+  direction: ltr;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+/* root and group are zero-size points at the composition origin */
+.ev-root, .ev-group {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+
+.ev-root { left: 256px; top: 128px; }
+
+/* stage-sized box centred on the origin: a real box for "all" effects
+   (clip-path, filters) whose centre is the composition origin */
+.ev-all {
+  position: absolute;
+  left: -256px;
+  top: -128px;
+  width: 512px;
+  height: 256px;
+  transform-origin: 50% 50%;
+}
+
+.ev-layer {
+  position: absolute;
+  left: 256px;
+  top: 128px;
+  transform-origin: 0 0;
+  white-space: nowrap;
+}
+
+.ev-fx {
+  position: relative;
+  transform-origin: 50% 50%;
+}
+
+.ev-line {
+  display: inline-flex;
+  align-items: center;
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+  font-kerning: normal;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.ev-ch {
+  position: relative;
+  display: inline-block;
+  transform-origin: 50% 50%;
+}
+
+.ev-ch-a {
+  position: relative;
+  display: inline-block;
+  transform-origin: 50% 70%;
+}
+
+.ev-ch-f {
+  position: relative;
+  display: inline-block;
+}
+
+.ev-ch-s, .ev-ch-x {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-block;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.ev-ch-x {
+  -webkit-background-clip: text;
+  background-clip: text;
+  background-repeat: no-repeat;
+  background-position: -9999px 0;
+}
+
+.ev-img {
+  position: relative;
+  overflow: hidden;
+}
+
+.ev-pic {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+}
+.ev-pic.contain { object-fit: contain; }
+.ev-pic.cover { object-fit: cover; }
+
+.ev-mask {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.ev-shape-pill, .ev-shape-plate, .ev-shape-corners, .ev-shape-line { overflow: visible; }
+
+.ev-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 9999px;
+}
+
+.ev-corners {
+  position: absolute;
+  inset: 0;
+  -webkit-mask:
+    linear-gradient(#000 0 0) 0 0 / var(--cl) var(--ct) no-repeat,
+    linear-gradient(#000 0 0) 0 0 / var(--ct) var(--cl) no-repeat,
+    linear-gradient(#000 0 0) 100% 0 / var(--cl) var(--ct) no-repeat,
+    linear-gradient(#000 0 0) 100% 0 / var(--ct) var(--cl) no-repeat,
+    linear-gradient(#000 0 0) 0 100% / var(--cl) var(--ct) no-repeat,
+    linear-gradient(#000 0 0) 0 100% / var(--ct) var(--cl) no-repeat,
+    linear-gradient(#000 0 0) 100% 100% / var(--cl) var(--ct) no-repeat,
+    linear-gradient(#000 0 0) 100% 100% / var(--ct) var(--cl) no-repeat;
+}
+
+.ev-plate-outer, .ev-plate-inner {
+  position: absolute;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+}
+.ev-plate-outer { inset: 0; }
+
+.ev-img-x {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: -9999px 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* thumbnails: frozen until hovered */
+.ev-static *, .ev-static { animation-play-state: paused !important; }
+.ev-play .ev-static *, .ev-play .ev-static { animation-play-state: running !important; }
+
+/* editor hit-testing copy: same geometry, never animated, invisible glyphs */
+.ev-ghost * { animation: none !important; }
+.ev-ghost .ev-fx { visibility: hidden; }
