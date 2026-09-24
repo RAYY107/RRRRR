@@ -240,7 +240,7 @@ function Presets.duplicate(id, actor)
     return Presets.create({
         name = U.cleanText((p.name or 'Preset') .. ' 2', EvoraConst.Limits.NameLength),
         description = p.description,
-        category = p.builtin and p.category or p.category,
+        category = p.category,
         design = p.design,
     }, actor)
 end

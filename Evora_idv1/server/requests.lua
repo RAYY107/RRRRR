@@ -32,11 +32,24 @@ local function respond(src, reqId, ok, data, large)
     end
 end
 
+local lastLog = {}
+
+-- Logged at most once per player/action every 30 seconds (no console flood).
 local function reject(src, action, why)
-    if Config.Security.LogRejections then
-        U.warn('Rejected "%s" from %s (%s): %s', tostring(action), GetPlayerName(src) or '?', src, why)
-    end
+    if not Config.Security.LogRejections then return end
+    local key = tostring(src) .. ':' .. tostring(action)
+    local now = GetGameTimer()
+    if lastLog[key] and now - lastLog[key] < 30000 then return end
+    lastLog[key] = now
+    U.warn('Rejected "%s" from %s (%s): %s', tostring(action), GetPlayerName(src) or '?', src, why)
 end
+
+AddEventHandler('playerDropped', function()
+    local prefix = tostring(source) .. ':'
+    for k in pairs(lastLog) do
+        if k:sub(1, #prefix) == prefix then lastLog[k] = nil end
+    end
+end)
 
 RegisterNetEvent(E.Request, function(reqId, action, payload)
     local src = source
@@ -219,6 +232,15 @@ handle('manager.bootstrap', { perm = 'manage', large = true }, function(src, dat
             displayMode = Config.Render.DisplayMode,
             defaultPreset = Config.DefaultPreset,
         },
+    }
+end)
+
+handle('manager.stats', { perm = 'manage', large = true }, function(src, data)
+    local presetVersion = tonumber(data.presetVersion)
+    return true, {
+        stats = Designs.stats(),
+        presetVersion = Presets.version,
+        presets = presetVersion ~= Presets.version and Presets.list(true) or nil,
     }
 end)
 

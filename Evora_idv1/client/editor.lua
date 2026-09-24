@@ -172,6 +172,9 @@ function Editor.open(mode)
         end
         if data.presets then Editor.presetVersion = data.presetVersion end
 
+        -- the look players without a design get (used for "start from default")
+        data.defaultDesign = Renderer.default
+
         sendBoot()
         Editor.isOpen = true
         Editor.mode = mode
