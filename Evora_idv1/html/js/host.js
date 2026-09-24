@@ -52,7 +52,7 @@ async function setSlot(msg) {
   const old = s.handle;
   try {
     s.handle = renderDesign(s.el, msg.design, msg.id);
-  } catch (e) {
+  } catch {
     s.handle = null;
   }
   if (old) old.destroy();

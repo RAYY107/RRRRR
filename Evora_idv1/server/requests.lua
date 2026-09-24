@@ -114,7 +114,8 @@ handle('editor.bootstrap', { perm = 'self', large = true }, function(src, data)
         serverId = src,
         name = p.name,
         perms = Perms.summary(src),
-        design = p.record.design,
+        -- the design everyone currently sees (an expired temporary design is not live)
+        design = State.effective(p.record),
         record = Designs.summary(p.record, src),
         slots = Designs.slots(p.owner),
         favorites = Designs.favorites(p.owner),

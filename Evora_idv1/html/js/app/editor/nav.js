@@ -5,7 +5,7 @@ import { S, on, setUI } from '../store.js';
 import { T, dur, ago, errText } from '../i18n.js';
 import { thumb } from '../thumbs.js';
 import { request } from '../nui.js';
-import { toast, dialog, confirm } from '../ui.js';
+import { toast } from '../ui.js';
 import * as store from '../storage.js';
 import { clone } from '../../core/util.js';
 

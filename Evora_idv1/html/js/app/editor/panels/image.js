@@ -1,6 +1,6 @@
 // Evora ID — panel: the single image (emblem, URL or Discord avatar)
 
-import { h, ic, clear } from '../../dom.js';
+import { h, ic } from '../../dom.js';
 import { S, isAdvanced, setDesign, setUI } from '../../store.js';
 import { section, slider, segmented, toggle, colorField, fillEditor, select } from '../../controls.js';
 import { errText } from '../../i18n.js';

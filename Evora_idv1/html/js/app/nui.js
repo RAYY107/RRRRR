@@ -14,7 +14,7 @@ export async function post(name, data = {}) {
       body: JSON.stringify(data),
     });
     return await res.json();
-  } catch (e) {
+  } catch {
     return null;
   }
 }

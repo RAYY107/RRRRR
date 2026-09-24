@@ -7,8 +7,8 @@ import { request } from '../nui.js';
 import { toast, dialog, confirm } from '../ui.js';
 import { thumb } from '../thumbs.js';
 import { statusBadges } from '../editor/nav.js';
-import { freshDesign, complete } from '../schema.js';
-import { clone, debounce } from '../../core/util.js';
+import { freshDesign } from '../schema.js';
+import { debounce } from '../../core/util.js';
 
 const PAGES = [
   { id: 'players', icon: 'users', title: 'اللاعبون', desc: 'اللاعبون المتصلون الآن وحالة تصميم كل منهم.' },

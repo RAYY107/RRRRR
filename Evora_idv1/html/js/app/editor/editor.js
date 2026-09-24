@@ -4,7 +4,7 @@
 
 import { h, ic, clear, ltr, num, tooltip } from '../dom.js';
 import { S, on, emit, setDesign, setUI, undo, redo, commit, loadDesign, dirty, isAdvanced } from '../store.js';
-import { T, dur, errText, ago } from '../i18n.js';
+import { dur, errText, ago } from '../i18n.js';
 import { post, request } from '../nui.js';
 import { toast, menu, dialog, confirm, closePopover, popoverOpen, closeTopModal } from '../ui.js';
 import { freshDesign, complete } from '../schema.js';

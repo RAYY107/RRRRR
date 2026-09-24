@@ -130,7 +130,9 @@ function Designs.onPlayerReady(src)
         State.sendSnapshot(src)
         return
     end
-    State.players[src] = State.players[src] or { src = src, ready = false }
+    if existing and existing.loading then return end
+    State.players[src] = existing or { src = src, ready = false }
+    State.players[src].loading = true
 
     CreateThread(function()
         -- vRP assigns the account id during connection; wait for it.
@@ -143,6 +145,7 @@ function Designs.onPlayerReady(src)
         end
         if not owner then
             U.warn('Could not resolve an account for player %s; their design will not load.', src)
+            if State.players[src] then State.players[src].loading = false end
             State.sendSnapshot(src)
             return
         end
@@ -157,6 +160,7 @@ function Designs.onPlayerReady(src)
         p.name = name
         p.record = record
         p.ready = true
+        p.loading = false
         State.ownerIndex[owner] = src
 
         -- keep the last known name for offline listings

@@ -30,7 +30,7 @@ export function thumb(design, id, { w = 160, h: height = 80, zoom = 1.3, live = 
     }
     try {
       handle = renderDesign(el, design, id, { static: !live });
-    } catch (e) {
+    } catch {
       return;
     }
     const s = (w / 512) * zoom;
